@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from .forms import BookingForm
 from .models import Booking
+from .utils import get_available_machines
 
 
 @login_required
@@ -13,15 +14,9 @@ def create_booking(request):
             booking = form.save(commit=False)
             booking.user = request.user
 
-            # Check if slot is already taken
-            exists = Booking.objects.filter(
-                machine=booking.machine,
-                timeslot=booking.timeslot,
-                date=booking.date,
-                status="active"
-            ).exists()
+            available_machines = get_available_machines(booking.date, booking.timeslot)
 
-            if exists:
+            if booking.machine not in available_machines:
                 form.add_error(None, "This machine is already booked for that date and time slot.")
             else:
                 booking.save()
