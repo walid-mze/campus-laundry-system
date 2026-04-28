@@ -35,7 +35,6 @@
 ## Smart Features
 
 - [x] Implement waitlist if all machines are booked
-- [ ] Implement auto-release for unused reservations after a grace period
 
 ## Testing
 
