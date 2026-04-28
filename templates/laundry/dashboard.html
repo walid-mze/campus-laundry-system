@@ -1,0 +1,248 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — Campus Laundry{% endblock %}
+
+{% block extra_head %}
+<style>
+  .dash-stat {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    padding: 1.25rem 1.5rem;
+    transition: all .2s;
+  }
+  .dash-stat:hover { box-shadow: 0 4px 16px rgba(0,0,0,.07); transform: translateY(-2px); }
+  .dash-stat .val  { font-size: 1.8rem; font-weight: 800; letter-spacing: -1px; line-height: 1; }
+  .dash-stat .lbl  { font-size: .75rem; font-weight: 500; color: #9ca3af; text-transform: uppercase; letter-spacing: .5px; margin-top: .25rem; }
+
+  .section-card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  .section-card .section-head {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid #f3f4f6;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .section-card .section-head strong { font-size: .9rem; font-weight: 700; }
+
+  .slot-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    background: #e0e7ff;
+    color: #4f46e5;
+    font-size: .78rem;
+    font-weight: 600;
+    padding: .25rem .65rem;
+    border-radius: 20px;
+  }
+
+  .notif-row {
+    display: flex;
+    gap: .75rem;
+    align-items: flex-start;
+    padding: .85rem 1.25rem;
+    border-bottom: 1px solid #f9fafb;
+    font-size: .855rem;
+  }
+  .notif-row:last-child { border-bottom: none; }
+  .notif-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    margin-top: .35rem;
+    flex-shrink: 0;
+  }
+
+  .today-card {
+    background: linear-gradient(135deg, #4f46e5, #7c3aed);
+    color: #fff;
+    border-radius: 14px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .today-card .time-chip {
+    background: rgba(255,255,255,.2);
+    border-radius: 20px;
+    padding: .3rem .9rem;
+    font-size: .8rem;
+    font-weight: 600;
+    display: inline-block;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-0">My Dashboard</h2>
+    <p class="text-muted mb-0" style="font-size:.875rem">{{ today|date:"l, F j, Y" }}</p>
+  </div>
+  <a href="{% url 'create_booking' %}" class="btn btn-primary btn-sm">New Booking</a>
+</div>
+
+<!-- Today's upcoming slots -->
+{% if upcoming_today %}
+<div class="today-card">
+  <div style="font-size:.75rem;font-weight:600;letter-spacing:.8px;text-transform:uppercase;opacity:.7;margin-bottom:.6rem">Today</div>
+  <div class="d-flex flex-wrap gap-2">
+    {% for b in upcoming_today %}
+    <div style="background:rgba(255,255,255,.15);border-radius:10px;padding:.6rem 1rem">
+      <div style="font-weight:700;font-size:.9rem">{{ b.machine }}</div>
+      <div style="font-size:.8rem;opacity:.85">{{ b.timeslot }}</div>
+      <div class="mt-2 d-flex gap-2">
+        <a href="{% url 'reschedule_booking' b.pk %}"
+           style="font-size:.75rem;color:rgba(255,255,255,.8);text-decoration:none">Reschedule</a>
+        <span style="opacity:.4">·</span>
+        <form method="post" action="{% url 'cancel_booking' b.pk %}" class="d-inline"
+              onsubmit="return confirm('Cancel this booking?')">
+          {% csrf_token %}
+          <button type="submit"
+                  style="background:none;border:none;padding:0;font-size:.75rem;color:rgba(255,255,255,.8);cursor:pointer">
+            Cancel
+          </button>
+        </form>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<!-- Stats row -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="dash-stat">
+      <div class="val" style="color:#4f46e5">{{ active_bookings.count }}</div>
+      <div class="lbl">Active bookings</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="dash-stat">
+      <div class="val" style="color:#059669">{{ total_bookings }}</div>
+      <div class="lbl">Total bookings</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="dash-stat">
+      <div class="val" style="color:#d97706">{{ waitlist_entries.count }}</div>
+      <div class="lbl">Waitlist entries</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="dash-stat">
+      <div class="val" style="color:#9ca3af">{{ cancelled_bookings }}</div>
+      <div class="lbl">Cancelled</div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4">
+  <!-- Left column -->
+  <div class="col-lg-7">
+
+    <!-- Upcoming bookings -->
+    <div class="section-card mb-4">
+      <div class="section-head">
+        <strong>Upcoming bookings</strong>
+        <a href="{% url 'booking_history' %}" style="font-size:.8rem;color:#6b7280;text-decoration:none">View all</a>
+      </div>
+      {% if active_bookings %}
+      <table class="table mb-0">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Machine</th>
+            <th>Slot</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for b in active_bookings|slice:":6" %}
+          <tr>
+            <td style="font-weight:500">{{ b.date|date:"M j" }}</td>
+            <td>{{ b.machine }}</td>
+            <td><span class="slot-pill">{{ b.timeslot }}</span></td>
+            <td class="text-end">
+              <form method="post" action="{% url 'cancel_booking' b.pk %}" class="d-inline"
+                    onsubmit="return confirm('Cancel this booking?')">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline-danger btn-sm">Cancel</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <div class="p-4 text-center" style="color:#9ca3af;font-size:.875rem">
+        No upcoming bookings.
+        <a href="{% url 'create_booking' %}" style="color:#4f46e5">Book a slot</a>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Waitlist -->
+    {% if waitlist_entries %}
+    <div class="section-card">
+      <div class="section-head">
+        <strong>Waitlist</strong>
+        <span style="font-size:.78rem;color:#9ca3af">You'll be notified when slots open</span>
+      </div>
+      <table class="table mb-0">
+        <thead><tr><th>Date</th><th>Machine</th><th>Slot</th></tr></thead>
+        <tbody>
+          {% for w in waitlist_entries %}
+          <tr>
+            <td>{{ w.date|date:"M j" }}</td>
+            <td>{{ w.machine }}</td>
+            <td><span class="slot-pill">{{ w.timeslot }}</span></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+
+  </div>
+
+  <!-- Right column -->
+  <div class="col-lg-5">
+
+    <!-- Notifications -->
+    <div class="section-card mb-4">
+      <div class="section-head">
+        <strong>Recent notifications</strong>
+        <a href="{% url 'notification_list' %}" style="font-size:.8rem;color:#6b7280;text-decoration:none">See all</a>
+      </div>
+      {% if unread_notifs %}
+        {% for n in unread_notifs %}
+        <div class="notif-row">
+          <div class="notif-dot"
+               style="background:
+               {% if n.type == 'reminder' %}#4f46e5
+               {% elif n.type == 'waitlist' %}#059669
+               {% elif n.type == 'cancellation' %}#9ca3af
+               {% else %}#d97706{% endif %}">
+          </div>
+          <div>
+            <div style="font-weight:600;font-size:.8rem;margin-bottom:.15rem">{{ n.get_type_display }}</div>
+            <div style="color:#6b7280;font-size:.82rem;line-height:1.5">{{ n.message|truncatechars:90 }}</div>
+            <div style="font-size:.73rem;color:#d1d5db;margin-top:.2rem">{{ n.created_at|timesince }} ago</div>
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+      <div class="p-4 text-center" style="color:#9ca3af;font-size:.875rem">No new notifications.</div>
+      {% endif %}
+    </div>
+
+  </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,222 @@
+{% extends "base.html" %}
+{% block title %}Machine Availability — Campus Laundry{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2><i class="bi bi-grid-3x3-gap me-2"></i>Machine Availability</h2>
+  <span class="badge bg-secondary fs-6"><i class="bi bi-calendar3 me-1"></i>{{ today }}</span>
+</div>
+
+{% if not grouped_machines %}
+<div class="alert alert-info">No machines have been configured yet.</div>
+{% else %}
+
+{% for group_label, group_icon, group_items in grouped_machines %}
+<div class="mb-5">
+  <h4 class="mb-3 text-secondary border-bottom pb-2">
+    <i class="bi {{ group_icon }} me-2"></i>{{ group_label }}
+    <small class="text-muted fs-6 ms-2">({{ group_items|length }} machine{{ group_items|length|pluralize }})</small>
+  </h4>
+
+  <div class="row g-3">
+    {% for item in group_items %}
+    {% with m=item.machine free_count=item.free_count total_count=item.total_count %}
+    <div class="col-md-6 col-lg-4">
+      <div class="card shadow-sm h-100">
+
+        {# Card header — always visible #}
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <div>
+            <strong>{{ m }}</strong><br>
+            <small class="text-muted"><i class="bi bi-geo-alt me-1"></i>{{ m.location }}</small>
+          </div>
+          <span class="badge {% if m.status == 'available' %}bg-success{% else %}bg-danger{% endif %}">
+            {{ m.get_status_display }}
+          </span>
+        </div>
+
+        {# Availability summary bar #}
+        <div class="card-body pb-2">
+          {% if m.status == 'maintenance' %}
+          <p class="text-danger mb-0"><i class="bi bi-tools me-1"></i>Under maintenance — no bookings available.</p>
+          {% else %}
+          <div class="d-flex justify-content-between align-items-center mb-1">
+            <small class="text-muted">
+              <span class="text-success fw-semibold">{{ free_count }}</span> /
+              {{ total_count }} slots free today
+            </small>
+            <small class="text-muted">
+              {% if free_count == 0 %}
+              <span class="text-danger">Fully booked</span>
+              {% elif free_count == total_count %}
+              <span class="text-success">All free</span>
+              {% else %}
+              <span class="text-warning">Partially booked</span>
+              {% endif %}
+            </small>
+          </div>
+          {# progress bar #}
+          <div class="progress mb-3" style="height:6px">
+            <div class="progress-bar bg-success"
+                 style="width:{% widthratio free_count total_count 100 %}%"></div>
+          </div>
+
+          {# Toggle button #}
+          <button class="btn btn-outline-secondary btn-sm w-100"
+                  type="button"
+                  data-bs-toggle="collapse"
+                  data-bs-target="#slots-{{ m.pk }}"
+                  aria-expanded="false">
+            <i class="bi bi-chevron-down me-1 toggle-icon"></i>View time slots
+          </button>
+          {% endif %}
+        </div>
+
+        {# Collapsible slot table #}
+        {% if m.status != 'maintenance' %}
+        <div class="collapse" id="slots-{{ m.pk }}">
+          <div class="card-footer p-0">
+            <table class="table table-sm mb-0">
+              <thead class="table-light">
+                <tr><th>Time Slot</th><th>Status</th><th></th></tr>
+              </thead>
+              <tbody>
+                {% for slot in item.slots %}
+                <tr>
+                  <td class="align-middle">{{ slot.timeslot }}</td>
+                  <td class="align-middle">
+                    {% if slot.is_mine %}
+                    <span class="badge bg-primary">Your booking</span>
+                    {% elif slot.is_booked %}
+                    <span class="badge bg-danger">Booked</span>
+                    {% else %}
+                    <span class="badge bg-success">Free</span>
+                    {% endif %}
+                  </td>
+                  <td class="align-middle text-end">
+                    {% if slot.is_mine %}
+                      <a href="{% url 'booking_history' %}" class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-pencil"></i> Manage
+                      </a>
+                    {% elif slot.is_booked %}
+                      {% if user.is_authenticated %}
+                      <form method="post" action="{% url 'join_waitlist' m.id slot.timeslot.id today|date:'Y-m-d' %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-outline-secondary btn-sm"
+                                title="Join waitlist — you'll be notified when this slot opens">
+                          <i class="bi bi-hourglass-split"></i> Waitlist
+                        </button>
+                      </form>
+                      {% endif %}
+                    {% else %}
+                      {% if user.is_authenticated %}
+                      <button type="button"
+                              class="btn btn-outline-primary btn-sm"
+                              data-bs-toggle="modal"
+                              data-bs-target="#confirmModal"
+                              data-machine-id="{{ m.id }}"
+                              data-machine-name="{{ m }}"
+                              data-timeslot-id="{{ slot.timeslot.id }}"
+                              data-timeslot-label="{{ slot.timeslot }}"
+                              data-date="{{ today|date:'Y-m-d' }}">
+                        Book
+                      </button>
+                      {% endif %}
+                    {% endif %}
+                  </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="3" class="text-muted p-2">No timeslots configured.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        {% endif %}
+
+      </div>
+    </div>
+    {% endwith %}
+    {% endfor %}
+  </div>
+</div>
+{% endfor %}
+
+{% endif %}
+
+{% if not user.is_authenticated %}
+<div class="alert alert-secondary mt-3">
+  <a href="{% url 'login' %}">Login</a> or <a href="{% url 'register' %}">register</a>
+  to book a slot or join a waitlist.
+</div>
+{% endif %}
+
+<!-- Confirmation modal -->
+{% if user.is_authenticated %}
+<div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" style="max-width:420px">
+    <div class="modal-content" style="border-radius:16px;border:none;box-shadow:0 20px 60px rgba(0,0,0,.15)">
+      <div class="modal-body p-4">
+        <h5 class="mb-1" style="font-weight:700" id="confirmModalLabel">Confirm booking</h5>
+        <p class="text-muted mb-4" style="font-size:.875rem">Review the details before confirming.</p>
+
+        <div style="background:#f5f5f7;border-radius:10px;padding:1rem 1.25rem;margin-bottom:1.5rem">
+          <div class="d-flex justify-content-between mb-2" style="font-size:.875rem">
+            <span class="text-muted">Machine</span>
+            <span id="modal-machine" style="font-weight:600"></span>
+          </div>
+          <div class="d-flex justify-content-between mb-2" style="font-size:.875rem">
+            <span class="text-muted">Date</span>
+            <span id="modal-date" style="font-weight:600"></span>
+          </div>
+          <div class="d-flex justify-content-between" style="font-size:.875rem">
+            <span class="text-muted">Time slot</span>
+            <span id="modal-timeslot" style="font-weight:600"></span>
+          </div>
+        </div>
+
+        <form method="post" action="{% url 'quick_book' %}">
+          {% csrf_token %}
+          <input type="hidden" name="machine_id"  id="modal-machine-id">
+          <input type="hidden" name="timeslot_id" id="modal-timeslot-id">
+          <input type="hidden" name="date"         id="modal-date-val">
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary flex-grow-1">Confirm booking</button>
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  // Chevron toggle
+  document.querySelectorAll('[data-bs-toggle="collapse"]').forEach(btn => {
+    const target = document.querySelector(btn.dataset.bsTarget);
+    target.addEventListener('show.bs.collapse', () => {
+      btn.innerHTML = '<i class="bi bi-chevron-up me-1 toggle-icon"></i>Hide time slots';
+    });
+    target.addEventListener('hide.bs.collapse', () => {
+      btn.innerHTML = '<i class="bi bi-chevron-down me-1 toggle-icon"></i>View time slots';
+    });
+  });
+
+  // Populate confirmation modal
+  const confirmModal = document.getElementById('confirmModal');
+  if (confirmModal) {
+    confirmModal.addEventListener('show.bs.modal', e => {
+      const btn = e.relatedTarget;
+      document.getElementById('modal-machine').textContent    = btn.dataset.machineName;
+      document.getElementById('modal-timeslot').textContent   = btn.dataset.timeslotLabel;
+      document.getElementById('modal-date').textContent       = btn.dataset.date;
+      document.getElementById('modal-machine-id').value       = btn.dataset.machineId;
+      document.getElementById('modal-timeslot-id').value      = btn.dataset.timeslotId;
+      document.getElementById('modal-date-val').value         = btn.dataset.date;
+    });
+  }
+</script>
+{% endblock %}

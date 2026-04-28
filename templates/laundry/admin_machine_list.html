@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Manage Machines — Campus Laundry{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2><i class="bi bi-hdd-stack me-2"></i>Machines</h2>
+  <a href="{% url 'admin_machine_create' %}" class="btn btn-primary btn-sm">
+    <i class="bi bi-plus-lg me-1"></i>Add Machine
+  </a>
+</div>
+
+{% if machines %}
+<div class="table-responsive">
+  <table class="table table-hover align-middle">
+    <thead class="table-light">
+      <tr><th>#</th><th>Type</th><th>Location</th><th>Status</th><th>Actions</th></tr>
+    </thead>
+    <tbody>
+      {% for m in machines %}
+      <tr>
+        <td>{{ m.pk }}</td>
+        <td>{{ m.get_type_display }}</td>
+        <td>{{ m.location }}</td>
+        <td>
+          <span class="badge {% if m.status == 'available' %}bg-success{% else %}bg-danger{% endif %}">
+            {{ m.get_status_display }}
+          </span>
+        </td>
+        <td>
+          <form method="post" action="{% url 'admin_toggle_maintenance' m.pk %}" class="d-inline">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-sm btn-outline-warning me-1">
+              <i class="bi bi-tools"></i>
+              {% if m.status == 'available' %}Set Maintenance{% else %}Set Available{% endif %}
+            </button>
+          </form>
+          <a href="{% url 'admin_machine_edit' m.pk %}" class="btn btn-sm btn-outline-primary me-1">
+            <i class="bi bi-pencil"></i>
+          </a>
+          <form method="post" action="{% url 'admin_machine_delete' m.pk %}" class="d-inline"
+                onsubmit="return confirm('Delete this machine?')">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-sm btn-outline-danger">
+              <i class="bi bi-trash"></i>
+            </button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="alert alert-info">No machines yet. <a href="{% url 'admin_machine_create' %}">Add one.</a></div>
+{% endif %}
+{% endblock %}

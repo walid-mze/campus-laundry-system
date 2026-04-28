@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}Statistics — Campus Laundry{% endblock %}
+
+{% block content %}
+<h2 class="mb-4"><i class="bi bi-bar-chart me-2"></i>Usage Statistics</h2>
+
+<div class="row g-4">
+  <div class="col-lg-6">
+    <div class="card shadow-sm">
+      <div class="card-header"><strong>Bookings by Machine</strong></div>
+      <div class="card-body p-0">
+        <table class="table table-sm mb-0">
+          <thead class="table-light">
+            <tr><th>Machine</th><th>Location</th><th>Total Bookings</th></tr>
+          </thead>
+          <tbody>
+            {% for row in machine_usage %}
+            <tr>
+              <td>{{ row.machine__type|capfirst }}</td>
+              <td>{{ row.machine__location }}</td>
+              <td>
+                <div class="d-flex align-items-center gap-2">
+                  <div class="progress flex-grow-1" style="height:8px">
+                    <div class="progress-bar" style="width:{{ row.total }}0%"></div>
+                  </div>
+                  {{ row.total }}
+                </div>
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="3" class="text-muted">No data.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="card shadow-sm">
+      <div class="card-header"><strong>Bookings by Status</strong></div>
+      <div class="card-body p-0">
+        <table class="table table-sm mb-0">
+          <thead class="table-light">
+            <tr><th>Status</th><th>Count</th></tr>
+          </thead>
+          <tbody>
+            {% for row in status_breakdown %}
+            <tr>
+              <td><span class="badge badge-{{ row.status }}">{{ row.status|capfirst }}</span></td>
+              <td>{{ row.total }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="2" class="text-muted">No data.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12">
+    <div class="card shadow-sm">
+      <div class="card-header"><strong>Daily Booking Volume</strong></div>
+      <div class="card-body p-0">
+        <table class="table table-sm mb-0">
+          <thead class="table-light">
+            <tr><th>Date</th><th>Bookings</th></tr>
+          </thead>
+          <tbody>
+            {% for row in daily %}
+            <tr>
+              <td>{{ row.day }}</td>
+              <td>
+                <div class="d-flex align-items-center gap-2">
+                  <div class="progress flex-grow-1" style="height:8px;max-width:200px">
+                    <div class="progress-bar bg-info" style="width:{{ row.total }}0%"></div>
+                  </div>
+                  {{ row.total }}
+                </div>
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="2" class="text-muted">No data.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

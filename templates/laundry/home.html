@@ -1,0 +1,225 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Campus Laundry{% endblock %}
+
+{% block extra_head %}
+<style>
+  .hero {
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+    border-radius: 20px;
+    padding: 3.5rem 3rem;
+    color: #fff;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 2.5rem;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 280px; height: 280px;
+    background: rgba(255,255,255,.06);
+    border-radius: 50%;
+    pointer-events: none;
+  }
+  .hero::after {
+    content: '';
+    position: absolute;
+    bottom: -80px; left: -40px;
+    width: 220px; height: 220px;
+    background: rgba(255,255,255,.04);
+    border-radius: 50%;
+    pointer-events: none;
+  }
+  .hero-content { position: relative; z-index: 1; }
+  .hero h1 {
+    font-size: clamp(1.6rem, 3.5vw, 2.4rem);
+    font-weight: 700;
+    letter-spacing: -.5px;
+    margin-bottom: .5rem;
+  }
+  .hero p {
+    font-size: .95rem;
+    opacity: .8;
+    margin-bottom: 1.75rem;
+    max-width: 440px;
+  }
+  .hero-actions { display: flex; gap: .75rem; flex-wrap: wrap; }
+  .btn-hero-main {
+    background: #fff;
+    color: #4f46e5;
+    font-weight: 600;
+    font-size: .9rem;
+    padding: .65rem 1.5rem;
+    border-radius: 9px;
+    border: none;
+    text-decoration: none;
+    transition: all .2s;
+  }
+  .btn-hero-main:hover { color: #3730a3; transform: translateY(-1px); box-shadow: 0 6px 18px rgba(0,0,0,.15); }
+  .btn-hero-ghost {
+    background: rgba(255,255,255,.15);
+    color: #fff;
+    font-weight: 500;
+    font-size: .9rem;
+    padding: .65rem 1.5rem;
+    border-radius: 9px;
+    border: 1.5px solid rgba(255,255,255,.3);
+    text-decoration: none;
+    transition: all .2s;
+  }
+  .btn-hero-ghost:hover { background: rgba(255,255,255,.25); color: #fff; transform: translateY(-1px); }
+
+  .feature-card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    padding: 1.75rem;
+    height: 100%;
+    transition: all .2s;
+  }
+  .feature-card:hover { border-color: #c7d2fe; box-shadow: 0 6px 20px rgba(79,70,229,.09); transform: translateY(-2px); }
+  .feature-tag {
+    display: inline-block;
+    font-size: .72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .6px;
+    padding: .2rem .55rem;
+    border-radius: 5px;
+    margin-bottom: .75rem;
+  }
+  .feature-card h5 { font-size: .95rem; font-weight: 700; margin-bottom: .5rem; }
+  .feature-card p  { font-size: .855rem; color: #6b7280; line-height: 1.65; margin: 0; }
+
+  .step-row { display: flex; align-items: flex-start; gap: 1rem; }
+  .step-num {
+    min-width: 32px; height: 32px;
+    background: #e0e7ff; color: #4f46e5;
+    border-radius: 9px; font-weight: 700;
+    font-size: .85rem;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .step-title { font-weight: 600; font-size: .9rem; margin-bottom: .15rem; }
+  .step-desc  { font-size: .845rem; color: #6b7280; line-height: 1.6; }
+
+  .stats-row {
+    display: flex;
+    gap: 0;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    overflow: hidden;
+    margin-bottom: 2.5rem;
+  }
+  .stats-row .stat { flex: 1; padding: 1.25rem 1rem; text-align: center; border-right: 1px solid #e5e7eb; }
+  .stats-row .stat:last-child { border-right: none; }
+  .stat-val { font-size: 1.5rem; font-weight: 800; color: #4f46e5; letter-spacing: -1px; display: block; }
+  .stat-lbl { font-size: .74rem; color: #9ca3af; font-weight: 500; text-transform: uppercase; letter-spacing: .5px; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Hero -->
+<div class="hero">
+  <div class="hero-content">
+    <p style="font-size:.75rem;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;opacity:.6;margin-bottom:.5rem">
+      Campus Residence
+    </p>
+    <h1>Book your laundry slot</h1>
+    <p>Real-time availability, instant reservations, automatic reminders.</p>
+    <div class="hero-actions">
+      <a href="{% url 'machine_list' %}" class="btn-hero-main">View machines</a>
+      {% if user.is_authenticated %}
+      <a href="{% url 'create_booking' %}" class="btn-hero-ghost">Book now</a>
+      {% else %}
+      <a href="{% url 'register' %}" class="btn-hero-ghost">Create account</a>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Stats strip -->
+<div class="stats-row">
+  <div class="stat">
+    <span class="stat-val">{{ machines.count }}</span>
+    <span class="stat-lbl">Machines</span>
+  </div>
+  <div class="stat">
+    <span class="stat-val">14</span>
+    <span class="stat-lbl">Slots / day</span>
+  </div>
+  <div class="stat">
+    <span class="stat-val">0</span>
+    <span class="stat-lbl">Double bookings</span>
+  </div>
+  <div class="stat">
+    <span class="stat-val">24/7</span>
+    <span class="stat-lbl">Online access</span>
+  </div>
+</div>
+
+<!-- Feature cards -->
+<div class="row g-3 mb-4">
+  <div class="col-md-4">
+    <div class="feature-card">
+      <span class="feature-tag" style="background:#e0e7ff;color:#4f46e5">Booking</span>
+      <h5>Reserve in seconds</h5>
+      <p>Pick a machine, select a date and time slot, confirm. Your slot is locked in immediately — no overlap, ever.</p>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="feature-card">
+      <span class="feature-tag" style="background:#d1fae5;color:#059669">Availability</span>
+      <h5>Live machine status</h5>
+      <p>See which machines are free right now. The grid updates in real time so you know exactly what to expect before heading down.</p>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="feature-card">
+      <span class="feature-tag" style="background:#fef3c7;color:#d97706">Smart features</span>
+      <h5>Waitlist & reminders</h5>
+      <p>Join a waitlist on any taken slot and get notified the moment it frees up. We also remind you 30 minutes before your booking.</p>
+    </div>
+  </div>
+</div>
+
+<!-- How it works -->
+<div class="card mb-4" style="border-radius:14px">
+  <div class="card-body p-4">
+    <h5 style="font-weight:700;margin-bottom:1.5rem">How it works</h5>
+    <div class="d-flex flex-column gap-4">
+      <div class="step-row">
+        <div class="step-num">1</div>
+        <div>
+          <div class="step-title">Create an account</div>
+          <div class="step-desc">Register with your details and log in. All your bookings are tracked in one place under your profile.</div>
+        </div>
+      </div>
+      <div class="step-row">
+        <div class="step-num">2</div>
+        <div>
+          <div class="step-title">Check availability</div>
+          <div class="step-desc">Browse the machine list to see which washers and dryers are free today, grouped by type and location.</div>
+        </div>
+      </div>
+      <div class="step-row">
+        <div class="step-num">3</div>
+        <div>
+          <div class="step-title">Book your slot</div>
+          <div class="step-desc">Choose the machine, date, and time that works for you. Only available slots are shown — no double bookings possible.</div>
+        </div>
+      </div>
+      <div class="step-row">
+        <div class="step-num">4</div>
+        <div>
+          <div class="step-title">Show up when ready</div>
+          <div class="step-desc">You get an in-app reminder 30 minutes before your slot starts. Cancel or reschedule anytime from your bookings page.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

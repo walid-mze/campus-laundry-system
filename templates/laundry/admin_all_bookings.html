@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}All Bookings — Campus Laundry{% endblock %}
+
+{% block content %}
+<h2 class="mb-4"><i class="bi bi-list-ul me-2"></i>All Bookings</h2>
+
+<div class="table-responsive">
+  <table class="table table-hover align-middle table-sm">
+    <thead class="table-light">
+      <tr>
+        <th>#</th>
+        <th>User</th>
+        <th>Machine</th>
+        <th>Date</th>
+        <th>Slot</th>
+        <th>Status</th>
+        <th>Created</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for b in bookings %}
+      <tr>
+        <td>{{ b.pk }}</td>
+        <td>{{ b.user.username }}</td>
+        <td>{{ b.machine }}</td>
+        <td>{{ b.date }}</td>
+        <td>{{ b.timeslot }}</td>
+        <td><span class="badge badge-{{ b.status }}">{{ b.get_status_display }}</span></td>
+        <td><small class="text-muted">{{ b.created_at|date:"M d H:i" }}</small></td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="7" class="text-muted">No bookings.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

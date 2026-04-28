@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block title %}Reschedule Booking — Campus Laundry{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card shadow-sm">
+      <div class="card-body p-4">
+        <h2 class="card-title mb-1"><i class="bi bi-arrow-repeat me-2"></i>Reschedule Booking</h2>
+        <p class="text-muted mb-4">
+          Current: <strong>{{ booking.machine }}</strong> on
+          <strong>{{ booking.date }}</strong> [{{ booking.timeslot }}]
+        </p>
+
+        <form method="post" id="rescheduleForm">
+          {% csrf_token %}
+
+          {% if form.non_field_errors %}
+          <div class="alert alert-danger">
+            {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+          </div>
+          {% endif %}
+
+          <div class="mb-3">
+            <label class="form-label">New Machine</label>
+            <select name="machine" id="id_machine" class="form-select">
+              {% for m in form.machine.field.queryset %}
+              <option value="{{ m.pk }}" {% if form.machine.value|stringformat:"s" == m.pk|stringformat:"s" %}selected{% endif %}>
+                {{ m }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">New Date</label>
+            <input type="date" name="date" id="id_date" class="form-control"
+                   value="{{ form.date.value|default:'' }}" />
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">New Time Slot</label>
+            <select name="timeslot" id="id_timeslot" class="form-select">
+              {% for ts in form.timeslot.field.queryset %}
+              <option value="{{ ts.pk }}" {% if form.timeslot.value|stringformat:"s" == ts.pk|stringformat:"s" %}selected{% endif %}>
+                {{ ts }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary">Confirm Reschedule</button>
+            <a href="{% url 'booking_history' %}" class="btn btn-outline-secondary">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  const machineSelect = document.getElementById('id_machine');
+  const dateInput = document.getElementById('id_date');
+  const timeslotSelect = document.getElementById('id_timeslot');
+  const excludeId = '{{ booking.pk }}';
+
+  function loadTimeslots() {
+    const machineId = machineSelect.value;
+    const date = dateInput.value;
+    if (!machineId || !date) return;
+    fetch(`/ajax/timeslots/?machine_id=${machineId}&date=${date}&exclude_booking_id=${excludeId}`)
+      .then(r => r.json())
+      .then(data => {
+        timeslotSelect.innerHTML = '';
+        data.timeslots.forEach(ts => {
+          const opt = document.createElement('option');
+          opt.value = ts.id;
+          opt.textContent = ts.label;
+          timeslotSelect.appendChild(opt);
+        });
+      });
+  }
+
+  machineSelect.addEventListener('change', loadTimeslots);
+  dateInput.addEventListener('change', loadTimeslots);
+</script>
+{% endblock %}

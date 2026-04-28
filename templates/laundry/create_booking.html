@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% block title %}New Booking — Campus Laundry{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card shadow-sm">
+      <div class="card-body p-4">
+        <h2 class="card-title mb-4"><i class="bi bi-calendar-plus me-2"></i>New Booking</h2>
+
+        <form method="post" id="bookingForm">
+          {% csrf_token %}
+
+          {% if form.non_field_errors %}
+          <div class="alert alert-danger">
+            {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+          </div>
+          {% endif %}
+
+          <div class="mb-3">
+            <label for="{{ form.machine.id_for_label }}" class="form-label">Machine</label>
+            <select name="machine" id="{{ form.machine.id_for_label }}"
+                    class="form-select {% if form.machine.errors %}is-invalid{% endif %}">
+              <option value="">— select a machine —</option>
+              {% for m in form.machine.field.queryset %}
+              <option value="{{ m.pk }}" {% if form.machine.value|stringformat:"s" == m.pk|stringformat:"s" %}selected{% endif %}>
+                {{ m }}
+              </option>
+              {% endfor %}
+            </select>
+            {% for e in form.machine.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+          </div>
+
+          <div class="mb-3">
+            <label for="{{ form.date.id_for_label }}" class="form-label">Date</label>
+            <input type="date" name="date" id="{{ form.date.id_for_label }}"
+                   class="form-control {% if form.date.errors %}is-invalid{% endif %}"
+                   value="{{ form.date.value|default:'' }}" />
+            {% for e in form.date.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+          </div>
+
+          <div class="mb-3">
+            <label for="{{ form.timeslot.id_for_label }}" class="form-label">Time Slot</label>
+            <select name="timeslot" id="{{ form.timeslot.id_for_label }}"
+                    class="form-select {% if form.timeslot.errors %}is-invalid{% endif %}">
+              <option value="">— select a date &amp; machine first —</option>
+              {% for ts in form.timeslot.field.queryset %}
+              <option value="{{ ts.pk }}" {% if form.timeslot.value|stringformat:"s" == ts.pk|stringformat:"s" %}selected{% endif %}>
+                {{ ts }}
+              </option>
+              {% endfor %}
+            </select>
+            {% for e in form.timeslot.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+          </div>
+
+          <div class="d-grid">
+            <button type="submit" class="btn btn-primary">Confirm Booking</button>
+          </div>
+        </form>
+
+        {% if waitlist_suggestion %}
+        <div class="alert alert-warning mt-3 mb-0">
+          <strong>That slot is taken.</strong> Join the waitlist and we'll notify you the moment it opens up.
+          <form method="post"
+                action="{% url 'join_waitlist' waitlist_suggestion.machine_id waitlist_suggestion.timeslot_id waitlist_suggestion.date %}"
+                class="mt-2">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-warning btn-sm">
+              <i class="bi bi-hourglass-split me-1"></i>Join Waitlist
+            </button>
+          </form>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  const machineSelect = document.getElementById('{{ form.machine.id_for_label }}');
+  const dateInput = document.getElementById('{{ form.date.id_for_label }}');
+  const timeslotSelect = document.getElementById('{{ form.timeslot.id_for_label }}');
+
+  function loadTimeslots() {
+    const machineId = machineSelect.value;
+    const date = dateInput.value;
+    if (!machineId || !date) return;
+
+    fetch(`/ajax/timeslots/?machine_id=${machineId}&date=${date}`)
+      .then(r => r.json())
+      .then(data => {
+        timeslotSelect.innerHTML = '';
+        if (!data.timeslots || data.timeslots.length === 0) {
+          const opt = document.createElement('option');
+          opt.value = '';
+          opt.textContent = '— no slots available for this date —';
+          timeslotSelect.appendChild(opt);
+        } else {
+          data.timeslots.forEach(ts => {
+            const opt = document.createElement('option');
+            opt.value = ts.id;
+            opt.textContent = ts.label;
+            timeslotSelect.appendChild(opt);
+          });
+        }
+      })
+      .catch(() => {
+        timeslotSelect.innerHTML = '<option value="">— error loading slots —</option>';
+      });
+  }
+
+  machineSelect.addEventListener('change', loadTimeslots);
+  dateInput.addEventListener('change', loadTimeslots);
+
+  // Auto-load on page open if machine + date already have values
+  if (machineSelect.value && dateInput.value) {
+    loadTimeslots();
+  }
+</script>
+{% endblock %}
