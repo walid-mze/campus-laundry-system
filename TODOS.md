@@ -39,10 +39,10 @@
 
 ## Testing
 
-- [ ] Test booking conflicts
-- [ ] Test cancellation and rescheduling
-- [ ] Test waitlist logic
-- [ ] Test auto-release logic
+- [x] Test booking conflicts
+- [x] Test cancellation and rescheduling
+- [x] Test waitlist logic
+- [x] Test auto-release logic
 
 ---
 
@@ -81,11 +81,11 @@
 
 ## Testing
 
-- [ ] Test machine management
-- [ ] Test user role restrictions
-- [ ] Test maintenance status behavior
-- [ ] Test availability updates
-- [ ] Test reminder logic
+- [x] Test machine management
+- [x] Test user role restrictions
+- [x] Test maintenance status behavior
+- [x] Test availability updates
+- [x] Test reminder logic
 
 ---
 
@@ -101,17 +101,17 @@
 
 ## Frontend
 
-- [ ] Create machine availability page
-- [ ] Create booking page
-- [ ] Display live machine availability in the booking interface
-- [ ] Create user dashboard
-- [ ] Create admin dashboard
+- [x] Create machine availability page
+- [x] Create booking page
+- [x] Display live machine availability in the booking interface
+- [x] Create user dashboard
+- [x] Create admin dashboard
 
 ---
 
 # Finalization
 
-- [ ] Write README documentation
+- [x] Write README documentation
 - [ ] Add screenshots to GitHub
 - [ ] Deploy the application
-- [ ] Prepare project presentation
+- [x] Prepare project presentation
