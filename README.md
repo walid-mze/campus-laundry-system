@@ -45,7 +45,7 @@ A comprehensive web application built with Django that allows students to view m
 
 1. **Clone the repository**:
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/walid-mze/campus-laundry-system
    cd campus-laundry-system
    ```
 
